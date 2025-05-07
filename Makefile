@@ -4,7 +4,7 @@ CC = cc
 
 # --- Compiler Flags -------------- #
 
-CFLAGS = -g -Wall -Wextra -Werror
+CFLAGS = -g -Wall -Wextra -Werror -fsanitize=address
 
 # --- NAME ---------------------- #
 
@@ -13,8 +13,8 @@ NAME = compress
 NODIR = --no-print-directory
 
 # --- PUSH SWAP SOURCES ------------ #
-VPATH = src:hashtable
-SRCS = $(wildcard src/*.c) $(wildcard hashtable/*.c)
+VPATH = src:ht
+SRCS = $(wildcard src/*.c) $(wildcard ht/*.c)
 
 OBJS = $(addprefix obj/,$(notdir $(SRCS:.c=.o)))
 
@@ -45,5 +45,6 @@ r:
 	@make $(NODIR)
 	@echo "------"
 	@./compress text.txt new.txt
+	@make clean
 
 .PHONY: all clean fclean re r

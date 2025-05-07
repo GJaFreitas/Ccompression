@@ -29,9 +29,17 @@
 // Substitute the current char with its compressed pair form and then move the array back
 void	substitute(Pair *pair, t_file *out, size_t j)
 {
+	char	*temp_buf;
+
 	out->str[j++] = pair->compressed;
 	out->size--;
-	memmove(&out->str[j], &out->str[j+1], out->size);
+	// Pull all the memory back as in:
+	// this is a cool string
+	// this is a cXol string
+	// this is a cXl string
+	temp_buf = strdup(&out->str[j+1]);
+	memcpy(&out->str[j], temp_buf, strlen(temp_buf) + 1);
+	free(temp_buf);
 }
 
 #define PairFound(in, pair, i) (!strncmp(&in->str[i], pair->c, 2))
@@ -45,18 +53,22 @@ void	pairSearch(t_file *in, t_file *out, Pair *pair)
 
 	for (size_t i = 0, j = 0; i < in->size-2; i++, j++) {
 
-		if (PairFound(in, pair, i)) {
+		if (PairFound(in, pair, i)) 
 			if (PairNotSubbed(out, in, i, j))
 				substitute(pair, out, j);
-			i++;
-		}
-
+		i++;
 	}
+
+}
+
+void	placebo(void *ptr)
+{
+	free(ptr);
 }
 
 char	*compress(t_file in, int fd_out)
 {
-	t_hashtable	*freqTable = create_freq_table(in);
+	ht_t	*freqTable = create_freq_table(in);
 	Pair	**pairs;
 	t_file	*out = calloc(1, sizeof(t_file));
 	size_t	num_pairs = getPairsFromTable(freqTable, &pairs);
@@ -68,7 +80,11 @@ char	*compress(t_file in, int fd_out)
 		pairSearch(&in, out, pairs[i]);
 	}
 
-	hashtable_foreach(freqTable, write_table_to_file, &fd_out);
+
+	ht_foreach(freqTable, write_table_to_file, &fd_out);
+
+	ht_destroy(freqTable, placebo);
+	free(freqTable);
 
 	return (out->str);
 }
@@ -99,7 +115,6 @@ int	main(int argc, char **argv)
 		out_len = strlen(output);
 		if (len == out_len)
 			break ;
-		printf("Iteration: %ld\nBefore: %ld	After: %ld\nGain: %ld\n\n", i, len, out_len, len - out_len);
 		len = out_len;
 	}
 
